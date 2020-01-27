@@ -7,6 +7,7 @@ import android.util.Log
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
+import java.lang.Exception
 import java.net.HttpURLConnection
 import java.net.MalformedURLException
 import java.net.URL
@@ -52,31 +53,35 @@ class MainActivity : AppCompatActivity() {
                     val response = connection.responseCode
                     Log.d(TAG, "downloadXML: The response coe was  $response")
 
-//            val inputStream = connection.inputStream
-//            val inputStreamReader = InputStreamReader(inputStream)
-//            val reader = BufferedReader(inputStreamReader)
-                    val reader = BufferedReader(InputStreamReader(connection.inputStream))
-
-                    val inputBuffer = CharArray(500)
-                    var charsRead = 0
-                    while (charsRead >= 0) {
-                        charsRead = reader.read(inputBuffer)
-                        if (charsRead > 0) {
-                            xmlResult.append(String(inputBuffer, 0, charsRead))
-                        }
+//                    val reader = BufferedReader(InputStreamReader(connection.inputStream))
+//
+//                    val inputBuffer = CharArray(500)
+//                    var charsRead = 0
+//                    while (charsRead >= 0) {
+//                        charsRead = reader.read(inputBuffer)
+//                        if (charsRead > 0) {
+//                            xmlResult.append(String(inputBuffer, 0, charsRead))
+//                        }
+//                    }
+//                    reader.close()
+                    val stream = connection.inputStream
+                    stream.buffered().reader().use{reader ->
+                        xmlResult.append(reader.readText())
                     }
-                    reader.close()
                     Log.d(TAG, "received ${xmlResult.length} bytes")
                     return xmlResult.toString()
-                } catch (e: MalformedURLException) {
-                    Log.e(TAG, "downloadXML: Invalid URL ${e.message}")
-                } catch (e: IOException) {
-                    Log.e(TAG, "downloadXML: IO Exception reading data: ${e.message}")
-                } catch (e: SecurityException){
-                    Log.e(TAG, "downloadXML: Security  exception. needs permissions? ${e.message}")
-                }
-                catch (e: Exception) {
-                    Log.e(TAG, "Unknown error: ${e.message}")
+
+
+                } catch(e: Exception){
+                    val errorMessage: String = when (e){
+                        is MalformedURLException -> "downloadXML: Invalid URL ${e.message}"
+                        is IOException -> "downloadXML: IO Exception reading data ${e.message} "
+                        is SecurityException -> { e.printStackTrace()
+                            "downloadXML: Security Exception. Needs permission? ${e.message}"
+                        }
+                        else -> "Unknown error: ${e.message}"
+                    }
+                    Log.e(TAG, errorMessage)
                 }
                 return "" //if reached, there's been exception, return empty string
             }
