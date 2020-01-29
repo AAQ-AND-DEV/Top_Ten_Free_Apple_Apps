@@ -4,13 +4,21 @@ import android.os.AsyncTask
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import java.io.BufferedReader
-import java.io.IOException
-import java.io.InputStreamReader
-import java.lang.Exception
-import java.net.HttpURLConnection
-import java.net.MalformedURLException
 import java.net.URL
+
+class FeedEntry( var name: String = "", var artist: String = "", var releaseDate: String = "",
+    var summary: String = "",
+    var imageURL: String = ""){
+
+    override fun toString(): String {
+        return """
+            name = $name
+            artist = $artist
+            releaseDate = $releaseDate
+            imageURL = $imageURL
+        """.trimIndent()
+    }
+}
 
 class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
@@ -41,52 +49,53 @@ class MainActivity : AppCompatActivity() {
 
             override fun onPostExecute(result: String?) {
                 super.onPostExecute(result)
-                Log.d(TAG, "onPostExecute: parameter is $result")
+                //Log.d(TAG, "onPostExecute: parameter is $result")
+                val entries = parseXML(result)
             }
 
             private fun downloadXML(urlPath: String?): String {
-                val xmlResult = StringBuilder()
-
-                try {
-                    val url = URL(urlPath)
-                    val connection: HttpURLConnection = url.openConnection() as HttpURLConnection
-                    val response = connection.responseCode
-                    Log.d(TAG, "downloadXML: The response coe was  $response")
-
-//                    val reader = BufferedReader(InputStreamReader(connection.inputStream))
-//
-//                    val inputBuffer = CharArray(500)
-//                    var charsRead = 0
-//                    while (charsRead >= 0) {
-//                        charsRead = reader.read(inputBuffer)
-//                        if (charsRead > 0) {
-//                            xmlResult.append(String(inputBuffer, 0, charsRead))
-//                        }
-//                    }
-//                    reader.close()
-                    val stream = connection.inputStream
-                    stream.buffered().reader().use{reader ->
-                        xmlResult.append(reader.readText())
-                    }
-                    Log.d(TAG, "received ${xmlResult.length} bytes")
-                    return xmlResult.toString()
-
-
-                } catch(e: Exception){
-                    val errorMessage: String = when (e){
-                        is MalformedURLException -> "downloadXML: Invalid URL ${e.message}"
-                        is IOException -> "downloadXML: IO Exception reading data ${e.message} "
-                        is SecurityException -> { e.printStackTrace()
-                            "downloadXML: Security Exception. Needs permission? ${e.message}"
-                        }
-                        else -> "Unknown error: ${e.message}"
-                    }
-                    Log.e(TAG, errorMessage)
-                }
-                return "" //if reached, there's been exception, return empty string
+                return URL(urlPath).readText()
             }
         }
+
+            fun parseXML(result: String?): List<FeedEntry> {
+                val output = mutableListOf<FeedEntry>()
+                var ind = 0
+                if (result != null) {
+                    while (ind < result.length && ind != -1) {
+                        //val firstInd = result.indexOf("<entry>", ind)
+                        //println("reached")
+                        val titleInd = result.indexOf("<title>", ind)
+                        //println(titleInd)
+                        val titleEndInd = result.indexOf("</title", titleInd)
+                        val title = result.substring(titleInd + 6, titleEndInd)
+                        val summaryInd = result.indexOf("<summary>", titleEndInd)
+                        val summaryEndInd = result.indexOf("</summary>", summaryInd)
+                        val summary = result.substring(summaryInd + 8, summaryEndInd)
+                        val nameInd = result.indexOf("<im:name>", summaryEndInd)
+                        val nameEndInd = result.indexOf("</im:name", nameInd)
+                        val name = result.substring(nameInd + 9, nameEndInd)
+                        val artistInd = result.indexOf("<im:artist", nameEndInd)
+                        val artistTagEndInd = result.indexOf(">", artistInd)
+                        val artistEndInd = result.indexOf("</im:artist>", artistTagEndInd)
+                        val artist = result.substring(artistTagEndInd+1, artistEndInd)
+                        val imageTagInd = result.indexOf("<im:image", artistEndInd)
+                        val imageTagEndInd = result.indexOf(">", imageTagInd)
+                        val imageEndInd = result.indexOf("</im:image>", imageTagEndInd)
+                        val imageUrl = result.substring(imageTagEndInd+1, imageEndInd)
+                        val releaseInd = result.indexOf("<im:releaseDate", imageEndInd)
+                        val releaseEndTagInd = result.indexOf(">", releaseInd)
+                        val releaseEndInd = result.indexOf("</im:releaseDate>", releaseEndTagInd)
+                        val releaseDate = result.substring(releaseEndTagInd+1, releaseEndInd)
+                        val feedEntry = FeedEntry(name, artist, releaseDate, summary, imageUrl)
+                        output.add(feedEntry)
+                        println(feedEntry)
+                        ind = result.indexOf("<entry>", releaseEndInd)
+                    }
+
+                }
+                return output
+
+            }
     }
-
-
 }
