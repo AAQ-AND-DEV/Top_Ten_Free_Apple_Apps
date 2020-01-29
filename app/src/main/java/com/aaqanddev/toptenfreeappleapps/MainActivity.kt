@@ -50,7 +50,12 @@ class MainActivity : AppCompatActivity() {
             override fun onPostExecute(result: String?) {
                 super.onPostExecute(result)
                 //Log.d(TAG, "onPostExecute: parameter is $result")
-                val entries = parseXML(result)
+                //val entries = parseXML(result)
+                val parseApplications = ParseApplications()
+                if (result!=null){
+                    parseApplications.parse(result)
+
+                }
             }
 
             private fun downloadXML(urlPath: String?): String {
@@ -58,6 +63,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        //My parser
             fun parseXML(result: String?): List<FeedEntry> {
                 val output = mutableListOf<FeedEntry>()
                 var ind = 0
