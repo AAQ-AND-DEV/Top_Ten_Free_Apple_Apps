@@ -5,7 +5,8 @@ import android.os.AsyncTask
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import android.widget.ArrayAdapter
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.ListView
 import kotlinx.android.synthetic.main.activity_main.*
 import java.net.URL
@@ -28,21 +29,92 @@ class FeedEntry( var name: String = "", var artist: String = "", var releaseDate
 class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
 
-    private val downloadData by lazy {DownloadData(this, xmlListView)}
+    private var downloadData : DownloadData? = null
+
+    private  var feedUrl: String = "http://ax.itunes.apple.com/WebObjects/MZStoreServices.woa/ws/RSS/topfreeapplications/limit=%d/xml"
+    private var feedLimit = 10
+
+    private var feedCachedURL = "INVALIDATED"
+    private val STATE_URL = "feedUrl"
+    private val STATE_LIMIT = "feedLimit"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        Log.d(TAG, "onCreate called")
+
+        Log.d(TAG, "onCreate Called")
+        if (savedInstanceState!=null){
+            feedUrl = savedInstanceState.getString(STATE_URL).toString()
+            feedLimit = savedInstanceState.getInt(STATE_LIMIT)
+
+        }
+        downloadUrl(feedUrl.format(feedLimit))
+
+    }
+
+    private fun downloadUrl(feedUrl: String){
+        if (feedUrl != feedCachedURL){
+
+            Log.d(TAG, "downloadUrl starting AsyncTask")
+            downloadData = DownloadData(this, xmlListView)
+            downloadData?.execute(feedUrl)
+            feedCachedURL = feedUrl
+            Log.d(TAG, "downloadUrl done")
+        }else{
+            Log.d(TAG, "downloadUrl - URL Not Changed")
+        }
+
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.feeds_menu, menu)
+
+        if (feedLimit == 10){
+            menu?.findItem(R.id.mnu10)?.isChecked = true
+        } else{
+            menu?.findItem(R.id.mnu25)?.isChecked = true
+        }
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
 
 
-        downloadData.execute("http://ax.itunes.apple.com/WebObjects/MZStoreServices.woa/ws/RSS/topfreeapplications/limit=10/xml")
-        Log.d(TAG, "onCreate: done")
+        when (item.itemId){
+            R.id.mnuFree -> feedUrl = "http://ax.itunes.apple.com/WebObjects/MZStoreServices.woa/ws/RSS/topfreeapplications/limit=%d/xml"
+            R.id.mnuPaid -> feedUrl = "http://ax.itunes.apple.com/WebObjects/MZStoreServices.woa/ws/RSS/toppaidapplications/limit=%d/xml"
+            R.id.mnuSongs -> feedUrl = "http://ax.itunes.apple.com/WebObjects/MZStoreServices.woa/ws/RSS/topsongs/limit=%d/xml"
+            R.id.mnu10, R.id.mnu25 -> {
+                if (!item.isChecked){
+                    item.isChecked = true
+                    feedLimit = 35 - feedLimit
+                    Log.d(TAG, "OnOptionsItemSelected: ${item.title} setting feedLimit to $feedLimit")
+                } else{
+                    Log.d(TAG, "OnOptionsItemSelected: ${item.title} setting feedLimit unchanged")
+
+                }
+            }
+            R.id.mnuRefresh -> feedCachedURL = "INVALIDATED"
+            else ->return super.onOptionsItemSelected(item)
+        }
+        downloadUrl(feedUrl.format(feedLimit))
+        return true
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(STATE_URL, feedUrl)
+        outState.putInt(STATE_LIMIT, feedLimit)
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+        super.onRestoreInstanceState(savedInstanceState)
+
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        downloadData.cancel(true)
+        downloadData?.cancel(true)
     }
 
     companion object {
@@ -76,8 +148,6 @@ class MainActivity : AppCompatActivity() {
 
                 }
 
-//                val arrayAdapter = ArrayAdapter<FeedEntry>(propContext,R.layout.list_item, parseApplications.applications)
-//                propListView.adapter = arrayAdapter
                 val feedAdapter = FeedAdapter(propContext, R.layout.list_record, parseApplications.applications)
                 propListView.adapter = feedAdapter
             }

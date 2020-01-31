@@ -9,7 +9,7 @@ class ParseApplications {
     val applications = ArrayList<FeedEntry>()
 
     fun parse(xmlData: String): Boolean{
-        Log.d(TAG,"parse called with $xmlData")
+        //Log.d(TAG,"parse called with $xmlData")
         var status = true
         var inEntry = false
         var textValue = ""
@@ -25,7 +25,7 @@ class ParseApplications {
                 val tagName = xpp.name?.toLowerCase() //done: uses safe call operator b/c xpp.name is null at beginning
                 when (eventType){
                     XmlPullParser.START_TAG -> {
-                        Log.d(TAG, "parse: Starting tage for " + tagName)
+                        //Log.d(TAG, "parse: Starting tage for " + tagName)
                         if (tagName == "entry"){
                             inEntry = true
                         }
@@ -33,7 +33,7 @@ class ParseApplications {
                     XmlPullParser.TEXT -> textValue = xpp.text
 
                     XmlPullParser.END_TAG -> {
-                        Log.d(TAG, "parse: Ending tag for " + tagName)
+                        //Log.d(TAG, "parse: Ending tag for " + tagName)
                         if (inEntry){
                             when (tagName){
                                 "entry" -> {
@@ -52,10 +52,10 @@ class ParseApplications {
                 }
                 eventType = xpp.next()
             }
-            for (app in applications){
-                Log.d(TAG, "********")
-                Log.d(TAG, app.toString())
-            }
+//            for (app in applications){
+//                Log.d(TAG, "********")
+//                Log.d(TAG, app.toString())
+//            }
         } catch (e:Exception){
             e.printStackTrace()
             status = false
