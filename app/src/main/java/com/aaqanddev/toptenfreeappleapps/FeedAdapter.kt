@@ -6,12 +6,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import android.widget.ImageView
 import android.widget.TextView
+import com.squareup.picasso.Picasso
 
 class ViewHolder(v: View){
     val tvName = v.findViewById<TextView>(R.id.tvName)
     val tvArtist = v.findViewById<TextView>(R.id.tvArtist)
     val tvSummary = v.findViewById<TextView>(R.id.tvSummary)
+    val ivlogo = v.findViewById<ImageView>(R.id.ivLogo)
 }
 
 
@@ -48,6 +51,7 @@ class FeedAdapter(context: Context, private val resource: Int, private val appli
         viewHolder.tvArtist.text = currentApp.artist
         viewHolder.tvSummary.text = currentApp.summary
 
+        Picasso.get().load(currentApp.imageURL).into(viewHolder.ivlogo)
         return view
     }
 
