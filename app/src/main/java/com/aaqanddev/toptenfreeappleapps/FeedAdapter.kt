@@ -18,11 +18,15 @@ class ViewHolder(v: View){
 }
 
 
-class FeedAdapter(context: Context, private val resource: Int, private val applications: List<FeedEntry>)
+class FeedAdapter(context: Context, private val resource: Int, private var applications: List<FeedEntry>)
     : ArrayAdapter<FeedEntry>(context, resource) {
     private val TAG = "FeedAdapter"
     private val inflater = LayoutInflater.from(context)
 
+    fun setFeedList(feedList: List<FeedEntry>){
+        this.applications = feedList
+        notifyDataSetChanged()
+    }
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
         //Log.d(TAG, "getView() called")
         val viewHolder: ViewHolder
@@ -39,11 +43,6 @@ class FeedAdapter(context: Context, private val resource: Int, private val appli
             viewHolder = view.tag as ViewHolder
 
         }
-
-//        val tvName = view.findViewById<TextView>(R.id.tvName)
-//        val tvArtist = view.findViewById<TextView>(R.id.tvArtist)
-//        val tvSummary = view.findViewById<TextView>(R.id.tvSummary)
-
 
         val currentApp = applications[position]
 

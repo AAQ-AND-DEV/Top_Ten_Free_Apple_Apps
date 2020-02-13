@@ -1,11 +1,13 @@
 package com.aaqanddev.toptenfreeappleapps
 
-import android.util.Log
+
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 
+private const val TAG = "ParseApplications"
+
 class ParseApplications {
-    private val TAG = "ParseApplications"
+
     val applications = ArrayList<FeedEntry>()
 
     fun parse(xmlData: String): Boolean{
